@@ -1,4 +1,4 @@
-# tocan - Token Request Kubeconfig creator
+# tòcan - Token Request Kubeconfig creator
 
 this is just a small program to use the Kubernetes Token Request API to create a kubeconfig file.
 
@@ -16,3 +16,7 @@ There are four command line paramters:
   -service-account string
         The service account to use for the token (default "default")
 ```
+
+## Name
+
+tòcan is scottish gaelic for token
