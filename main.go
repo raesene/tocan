@@ -4,10 +4,13 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"flag"
-	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
+	"gopkg.in/yaml.v2"
 	authv1 "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -99,7 +102,7 @@ func main() {
 		},
 		Spec: authv1.TokenRequestSpec{
 			ExpirationSeconds: expirationSeconds,
-			Audiences:         []string{"api"},
+			Audiences:         []string{"https://kubernetes.default.svc.cluster.local"},
 		},
 	}
 
@@ -107,7 +110,64 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(result.Status.Token)
 	raw, err := kubeConfig.RawConfig()
-	fmt.Println(raw.Contexts[raw.CurrentContext].Cluster)
+	if err != nil {
+		log.Fatal(err)
+	}
+	cluster := raw.Contexts[raw.CurrentContext].Cluster
+
+	kc := &KubeConfig{
+		APIVersion: "v1",
+		Clusters: Clusters{
+			0: {
+				Cluster{
+					base64.StdEncoding.EncodeToString([]byte(raw.Clusters[cluster].CertificateAuthorityData)),
+					raw.Clusters[cluster].Server,
+				},
+				cluster,
+			},
+		},
+		Contexts: Contexts{
+			0: {
+				Context{
+					Cluster: cluster,
+					User:    *serviceAccountName,
+				},
+				cluster,
+			},
+		},
+		CurrentContext: cluster,
+		Kind:           "Config",
+		Users: Users{
+			0: {
+				User{
+					Token: result.Status.Token,
+				},
+				*serviceAccountName,
+			},
+		},
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Print("Error Getting working directory")
+		log.Print(err)
+	}
+	_, err = os.Create(filepath.Join(dir, *outputFile))
+	if err != nil {
+		log.Print("Error Creating output file")
+		log.Print(err)
+	}
+	file, err := os.OpenFile(*outputFile, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		log.Print("Error opening output file")
+		log.Print(err)
+	}
+	defer file.Close()
+	e := yaml.NewEncoder(file)
+	err = e.Encode(kc)
+	if err != nil {
+		log.Print("Error encoding Kubeconfig YAML")
+		log.Print(err)
+	}
 }
