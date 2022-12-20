@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/base64"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -170,4 +171,5 @@ func main() {
 		log.Print("Error encoding Kubeconfig YAML")
 		log.Print(err)
 	}
+	fmt.Printf("Kubeconfig file created %s\n", *outputFile)
 }
