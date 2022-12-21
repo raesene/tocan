@@ -69,12 +69,12 @@ func initKubeClient() (*kubernetes.Clientset, clientcmd.ClientConfig, error) {
 	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
 	config, err := kubeConfig.ClientConfig()
 	if err != nil {
-		log.Printf("initKubeClient: failed creating ClientConfig with", err)
+		log.Printf("initKubeClient: failed creating ClientConfig with %s\n", err)
 		return nil, nil, err
 	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Printf("initKubeClient: failed creating Clientset with", err)
+		log.Printf("initKubeClient: failed creating Clientset with %s\n", err)
 		return nil, nil, err
 	}
 	return clientset, kubeConfig, nil
@@ -93,7 +93,7 @@ func main() {
 
 	clientset, kubeConfig, err := initKubeClient()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("error initializing kubernetes client")
 	}
 
 	tokenRequest := &authv1.TokenRequest{
@@ -109,11 +109,11 @@ func main() {
 
 	result, err := clientset.CoreV1().ServiceAccounts(*namespace).CreateToken(context.TODO(), *serviceAccountName, tokenRequest, metav1.CreateOptions{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error in creating Token %s", err)
 	}
 	raw, err := kubeConfig.RawConfig()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error creating Kubeconfig %s", err)
 	}
 	cluster := raw.Contexts[raw.CurrentContext].Cluster
 
@@ -151,25 +151,21 @@ func main() {
 
 	dir, err := os.Getwd()
 	if err != nil {
-		log.Print("Error Getting working directory")
-		log.Print(err)
+		log.Fatalf("Error Getting working directory %s", err)
 	}
 	_, err = os.Create(filepath.Join(dir, *outputFile))
 	if err != nil {
-		log.Print("Error Creating output file")
-		log.Print(err)
+		log.Fatalf("Error Creating output file %s", err)
 	}
 	file, err := os.OpenFile(*outputFile, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
-		log.Print("Error opening output file")
-		log.Print(err)
+		log.Fatalf("Error opening output file %s", err)
 	}
 	defer file.Close()
 	e := yaml.NewEncoder(file)
 	err = e.Encode(kc)
 	if err != nil {
-		log.Print("Error encoding Kubeconfig YAML")
-		log.Print(err)
+		log.Fatalf("Error encoding Kubeconfig YAML %s", err)
 	}
-	fmt.Printf("Kubeconfig file created %s\n", *outputFile)
+	fmt.Printf("Kubeconfig file %s created for service account %s in namespace %s \n", *outputFile, *serviceAccountName, *namespace)
 }
