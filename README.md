@@ -10,7 +10,7 @@ If run with no parameters it will create a file called `default.kubeconfig` in t
 
 If you want to create a kubeconfig for a different service account, you can specify the namespace and service account name with the `-namespace` and `-service-account` parameters.
 
-## command line parameters
+## Command line parameters
 
 There are four command line parameters:
 
