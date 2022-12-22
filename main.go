@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"gopkg.in/yaml.v2"
 	authv1 "k8s.io/api/authentication/v1"
@@ -96,6 +97,20 @@ func main() {
 		log.Fatal("error initializing kubernetes client")
 	}
 
+	raw, err := kubeConfig.RawConfig()
+	if err != nil {
+		log.Fatalf("Error creating Kubeconfig %s", err)
+	}
+
+	cluster := raw.Contexts[raw.CurrentContext].Cluster
+
+  // We're doing this because we need the server without a port
+	// To handle AKS aud parameter
+	server := raw.Clusters[cluster].Server
+	re := regexp.MustCompile(`^(https://[^:]+)(:\d+)?$`)
+	audserv := re.FindStringSubmatch(server)[1]
+	fmt.Println(audserv)
+
 	tokenRequest := &authv1.TokenRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      *serviceAccountName,
@@ -103,7 +118,7 @@ func main() {
 		},
 		Spec: authv1.TokenRequestSpec{
 			ExpirationSeconds: expirationSeconds,
-			Audiences:         []string{"https://kubernetes.default.svc.cluster.local"},
+			Audiences:         []string{audserv, "https://kubernetes.default.svc.cluster.local"},
 		},
 	}
 
@@ -111,11 +126,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error in creating Token %s", err)
 	}
-	raw, err := kubeConfig.RawConfig()
-	if err != nil {
-		log.Fatalf("Error creating Kubeconfig %s", err)
-	}
-	cluster := raw.Contexts[raw.CurrentContext].Cluster
+
+
 
 	kc := &KubeConfig{
 		APIVersion: "v1",
