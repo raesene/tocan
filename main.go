@@ -109,7 +109,6 @@ func main() {
 	server := raw.Clusters[cluster].Server
 	re := regexp.MustCompile(`^(https://[^:]+)(:\d+)?$`)
 	audserv := re.FindStringSubmatch(server)[1]
-	fmt.Println(audserv)
 
 	tokenRequest := &authv1.TokenRequest{
 		ObjectMeta: metav1.ObjectMeta{
@@ -118,7 +117,7 @@ func main() {
 		},
 		Spec: authv1.TokenRequestSpec{
 			ExpirationSeconds: expirationSeconds,
-			Audiences:         []string{audserv, "https://kubernetes.default.svc.cluster.local"},
+			Audiences:         []string{audserv,"https://kubernetes.default.svc.cluster.local","https://kubernetes.default.svc"},
 		},
 	}
 
