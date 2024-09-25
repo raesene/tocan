@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 
 	"gopkg.in/yaml.v2"
 	authv1 "k8s.io/api/authentication/v1"
@@ -25,36 +24,36 @@ type Cluster struct {
 	Server                   string `yaml:"server"`
 }
 
-//Clusters hold an array of the clusters that would exist in the config file
+// Clusters hold an array of the clusters that would exist in the config file
 type Clusters []struct {
 	Cluster Cluster `yaml:"cluster"`
 	Name    string  `yaml:"name"`
 }
 
-//Context holds the cluster context
+// Context holds the cluster context
 type Context struct {
 	Cluster string `yaml:"cluster"`
 	User    string `yaml:"user"`
 }
 
-//Contexts holds an array of the contexts
+// Contexts holds an array of the contexts
 type Contexts []struct {
 	Context Context `yaml:"context"`
 	Name    string  `yaml:"name"`
 }
 
-//Users holds an array of the users that would exist in the config file
+// Users holds an array of the users that would exist in the config file
 type Users []struct {
 	User User   `yaml:"user"`
 	Name string `yaml:"name"`
 }
 
-//User holds the user authentication data
+// User holds the user authentication data
 type User struct {
 	Token string `yaml:"token"`
 }
 
-//KubeConfig holds the necessary data for creating a new KubeConfig file
+// KubeConfig holds the necessary data for creating a new KubeConfig file
 type KubeConfig struct {
 	APIVersion     string   `yaml:"apiVersion"`
 	Clusters       Clusters `yaml:"clusters"`
@@ -104,12 +103,6 @@ func main() {
 
 	cluster := raw.Contexts[raw.CurrentContext].Cluster
 
-  // We're doing this because we need the server without a port
-	// To handle AKS aud parameter
-	server := raw.Clusters[cluster].Server
-	re := regexp.MustCompile(`^(https://[^:]+)(:\d+)?$`)
-	audserv := re.FindStringSubmatch(server)[1]
-
 	tokenRequest := &authv1.TokenRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      *serviceAccountName,
@@ -117,7 +110,6 @@ func main() {
 		},
 		Spec: authv1.TokenRequestSpec{
 			ExpirationSeconds: expirationSeconds,
-			Audiences:         []string{audserv,"https://kubernetes.default.svc.cluster.local","https://kubernetes.default.svc"},
 		},
 	}
 
@@ -125,8 +117,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error in creating Token %s", err)
 	}
-
-
 
 	kc := &KubeConfig{
 		APIVersion: "v1",
