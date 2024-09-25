@@ -10,7 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
+	//"regexp"
 
 	"gopkg.in/yaml.v2"
 	authv1 "k8s.io/api/authentication/v1"
@@ -106,9 +106,9 @@ func main() {
 
   // We're doing this because we need the server without a port
 	// To handle AKS aud parameter
-	server := raw.Clusters[cluster].Server
-	re := regexp.MustCompile(`^(https://[^:]+)(:\d+)?$`)
-	audserv := re.FindStringSubmatch(server)[1]
+	//server := raw.Clusters[cluster].Server
+	//re := regexp.MustCompile(`^(https://[^:]+)(:\d+)?$`)
+	//audserv := re.FindStringSubmatch(server)[1]
 
 	tokenRequest := &authv1.TokenRequest{
 		ObjectMeta: metav1.ObjectMeta{
@@ -117,7 +117,7 @@ func main() {
 		},
 		Spec: authv1.TokenRequestSpec{
 			ExpirationSeconds: expirationSeconds,
-			Audiences:         []string{audserv,"https://kubernetes.default.svc.cluster.local","https://kubernetes.default.svc"},
+			//Audiences:         []string{audserv,"https://kubernetes.default.svc.cluster.local","https://kubernetes.default.svc"},
 		},
 	}
 
